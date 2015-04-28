@@ -17,7 +17,7 @@ my %names;
 my %data;
 my $minreads = 12;
 my $minagreement = .75;
-my $refgenome = 'A44a';
+my $refgenome = 'reference';
 my @outdata;
 my $header = 'gnl'; #change to a string unique to the header line to skip it
 
