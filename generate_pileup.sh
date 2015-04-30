@@ -1,8 +1,8 @@
 #!/bin/bash
 reference="reference"
 insertsize=400
-insertmin=$insertsize - 100
-insertmax=$insertsize + 100
+insertmin=$(($insertsize-100))
+insertmax=$(($insertsize+100))
 scriptdir="/pseudospace1/weisberga/Software/pileup_v0.6/ssaha_pileup"
 integerregex='^[0-9]+$'
 
@@ -24,10 +24,8 @@ scriptdir=$user_script_dir
 command -v smalt >/dev/null 2>&1 || { echo >&2 "SMALT executable not found. Make sure smalt is in your path and try again. exiting."; exit 1; }
 
 
-
-
 #SMALT map, generate cigar files for each genome
-for genome in `ls ./reads/*.fastq | sed 's/\.\.\/fastq\///' | sed 's/\.[12]\.fastq//' | sed 's/\.all\.fastq//' | grep -v reads | sort | uniq`; do
+for genome in `ls ./reads/*.fastq | sed 's/\.[12]\.fastq//' | sed 's/\.all\.fastq//' | sed 's/\.\/reads\///' | sort | uniq`; do
     echo "Analyzing genome $genome"
     
     echo -n "Please enter the library insert size for $genome:"
@@ -36,16 +34,16 @@ for genome in `ls ./reads/*.fastq | sed 's/\.\.\/fastq\///' | sed 's/\.[12]\.fas
 	echo "ERROR: Insert size must be a number. exiting." >&2; exit 1
     fi
     insertsize=$current_insertsize
-    insertmin=$insertsize - 100
+    insertmin=$(($insertsize - 100))
     if [ $insertmin -lt 0 ]; then
 	    insertmin=0
     fi
-    insertmax=$insertsize + 100
+    insertmax=$(($insertsize + 100))
     
     echo "$genome: Mapping reads to reference genome using SMALT"
-    if [ ! -e "$genome.$reference.cigar" ]; then
-	echo "$genome: smalt map -n 2 -l pe -f cigar -j $insertmin -i $insertmax -o ./$genome.cigar ./index/$reference ./reads/$genome.R1.fastq ./reads/$genome.R2.fastq"
-	smalt map -n 2 -l pe -f cigar -j $insertmin -i $insertmax -o ./$genome.cigar ./index/$reference ./reads/$genome.R1.fastq ./reads/$genome.R2.fastq
+    if [ ! -e "$genome.cigar" ]; then
+	echo "$genome: smalt map -n 2 -l pe -f cigar -j $insertmin -i $insertmax -o ./$genome.cigar ./index/$reference ./reads/$genome.1.fastq ./reads/$genome.2.fastq"
+	smalt map -n 2 -l pe -f cigar -j $insertmin -i $insertmax -o ./$genome.cigar ./index/$reference ./reads/$genome.1.fastq ./reads/$genome.2.fastq
     fi
 
     #SSAHA2 pileup pipeline, generate pileup files for each genome
@@ -66,8 +64,8 @@ for genome in `ls ./reads/*.fastq | sed 's/\.\.\/fastq\///' | sed 's/\.[12]\.fas
 	    cat ${genome}_cigar.dat | awk '{print $2}' > $genome.dat
 	fi
 	if [ ! -e "./reads/$genome.all.fastq" ]; then
-           echo "$genome: cat ./reads/$genome.R1.fastq ./reads/$genome.R2.fastq > ./reads/$genome.all.fastq"
-           cat ./reads/$genome.R1.fastq ./reads/$genome.R2.fastq > ./reads/$genome.all.fastq
+           echo "$genome: cat ./reads/$genome.1.fastq ./reads/$genome.2.fastq > ./reads/$genome.all.fastq"
+           cat ./reads/$genome.1.fastq ./reads/$genome.2.fastq > ./reads/$genome.all.fastq
 	fi
 	if [ ! -s ${genome}_reads.fastq ]; then
 	    echo "$genome: $scriptdir/other_codes/get_seqreads/get_seqreads $genome.dat ./reads/$genome.all.fastq ${genome}_reads.fastq"

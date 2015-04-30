@@ -66,16 +66,16 @@ fi
 echo "Generating a maximum likelihood phylogeny with bootstrap support for the core alignment"
 #Do RAxML ML searches
 echo "Performing $mlsearch_replicates maximum likelihood tree searches"
-echo "$raxmlexecutable -m $model -p $random_seed -# $mlsearch_replicates -s $input_alignment -n core_alignment.tre > raxml_mlsearch.out"
-$raxmlexecutable -m $model -p $random_seed -# $mlsearch_replicates -s $input_alignment -n core_alignment.tre > raxml_mlsearch.out
+echo "$raxmlexecutable -m $model -p $random_seed -N $mlsearch_replicates -s $input_alignment -n core_alignment.tre > raxml_mlsearch.out"
+$raxmlexecutable -m $model -p $random_seed -N $mlsearch_replicates -s $input_alignment -n core_alignment.tre > raxml_mlsearch.out
 #Do RAxML bootstrap searches
 echo "Performing $bootstrap_replicates bootstrap tree searches"
-echo "$raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -# $bootstrap_replicates -s $input_alignment -n core_alignment.tre > raxml_bootstrap.out"
-$raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -# $bootstrap_replicates -s $input_alignment -n core_alignment.tre > raxml_bootstrap.out
+echo "$raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -N $bootstrap_replicates -s $input_alignment -n core_alignment_bootstrap.tre > raxml_bootstrap.out"
+$raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -N $bootstrap_replicates -s $input_alignment -n core_alignment_bootstrap.tre > raxml_bootstrap.out
 #Map bootstrap support values onto branches of the best ML search tree
 echo "Mapping bootstrap support values onto branches of the best ML search tree"
-echo "$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out"
-$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out
+echo "$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out"
+$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out
 
 echo "Tree file written to ./core_alignment_raxml.tre"
 echo "Done."

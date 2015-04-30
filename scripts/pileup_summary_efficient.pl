@@ -21,9 +21,14 @@ my $refgenome = 'A44a';
 my %outdata;
 my $header = 'gnl'; #change to a string unique to the header line to skip it
 
+#get refgenome from reference.fna
+my $refheader = `head -n 1 ./index/reference.fna`;
+$refheader =~ /^\>$header\|(\w+)\|/;
+$refgenome = $1;
+
 foreach my $infile (@infiles) {
     my $name = $infile;
-    $name =~ s/.$refgenome.pileup//;
+    $name =~ s/.\/pileup\/(.*).pileup/$1/;
     $names{$name} = $infile;
 }
 
