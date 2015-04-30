@@ -17,13 +17,18 @@ my %names;
 my %data;
 my $minreads = 12;
 my $minagreement = .75;
-my $refgenome = 'reference';
-my @outdata;
+my $refgenome = 'A44a';
+my %outdata;
 my $header = 'gnl'; #change to a string unique to the header line to skip it
+
+#get refgenome from reference.fna
+my $refheader = `head -n 1 ./index/reference.fna`;
+$refheader =~ /^\>$header\|(\w+)\|/;
+$refgenome = $1;
 
 foreach my $infile (@infiles) {
     my $name = $infile;
-    $name =~ s/.$refgenome.pileup//;
+    $name =~ s/.\/pileup\/(.*).pileup/$1/;
     $names{$name} = $infile;
 }
 
@@ -38,18 +43,21 @@ foreach my $name (sort keys %names) {
 	    next if $line !~ /$header/; #Skip header line
 	    chomp($line);
 	    my ($refa,$refb,$pos,$reads,$refbase,$nA,$nC,$nG,$nT,@junk) = split(" ",$line); #split line into relevant data, ignore low quality calls
-	    ${${$data{$refb}}{$pos}}{$refgenome} = $refbase; #store reference base
-	    my $base = '';
+	    if (!${$outdata{$refb}}[$pos]) {
+		my $contig = $refb;
+		$contig = $1 if $refb =~ /(contig00000[\d])/;
+		${$outdata{$refb}}[$pos] = join("\t",$contig,$pos,$refbase);
+	    }
 	    if ($line =~ /Zero coverage/ || $reads < $minreads) {
-		${${$data{$refb}}{$pos}}{$name} = '-'; #Set base to missing '-' if no reads map
+		${$outdata{$refb}}[$pos] .= "\t".'-';
 		next;
 	    }
 	    my $max = max($nA,$nC,$nG,$nT); #Of the 4 bases, get the max value
 	    if ($max/$reads < $minagreement) {
-		${${$data{$refb}}{$pos}}{$name} = '-'; #Skip call if less than $minagreement reads agree
+		${$outdata{$refb}}[$pos] .= "\t".'-';#Skip call if less than $minagreement reads agree
 		next;		
 	    }
-	    
+	    my $base = '';
 	    #Check to see which base has the max reads
 	    if ($max == $nA) {
 		$base = 'A';
@@ -61,10 +69,10 @@ foreach my $name (sort keys %names) {
 		$base = 'T';
 	    }
 	    if (defined($base)) { #Should never be undefined, hopefully
-		${${$data{$refb}}{$pos}}{$name} = $base; #Store base of aligned genome with position data
+		${$outdata{$refb}}[$pos] .= "\t"."$base"; #Store base of aligned genome with position data
 	    } else {
 		print STDERR "There was a problem calculating the base.\n";
-		${${$data{$refb}}{$pos}}{$name} = '-';
+		${$outdata{$refb}}[$pos] .= "\t".'-';
 	    }
 	}
 	close INFILE;
@@ -72,16 +80,14 @@ foreach my $name (sort keys %names) {
 }
 
 print join("\t",'contig','pos',$refgenome,(sort(keys(%names))))."\n";
-foreach my $refcontig (sort keys %data) { #Get the data for each contig
+foreach my $refcontig (sort keys %outdata) { #Get the data for each contig
     my $contig = $1 if $refcontig =~ /(contig00000[\d])/; #Assumes reference has contig0000\d and saves that data. Change if not the case.
     if ($contig) {
-	my %tempdata = %{$data{$refcontig}}; #Get the hash to make printing easier
-	foreach my $pos (sort {$a <=> $b} (keys(%tempdata))) { #Sort the hash by position
-	    print join("\t",$contig,$pos,${$tempdata{$pos}}{$refgenome}); #print the contig, position, and reference base
-	    foreach my $name (sort(keys(%names))) { #For each genome, print the aligned base call
-		print "\t".${$tempdata{$pos}}{$name};
+	my @tempdata = @{$outdata{$refcontig}}; #Get the data
+	foreach my $pos (@tempdata) { #print each pos
+	    if ($pos) {
+		print $pos."\n";
 	    }
-	    print "\n";
 	}
     } else {
 	print STDERR "No contig found! Skipping!\n";
