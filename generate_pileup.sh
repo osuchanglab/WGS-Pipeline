@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 reference="reference"
 insertsize=400
 insertmin=$(($insertsize-100))

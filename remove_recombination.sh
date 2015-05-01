@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 echo "Running Gubbins to remove recombination"
 echo "run_gubbins.py --threads 1 -f 30 core_alignment.fasta"
 run_gubbins.py --threads 1 -f 30 core_alignment.fasta

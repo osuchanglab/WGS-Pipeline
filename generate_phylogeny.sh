@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #RAxML default settings, either change here or during runtime
 random_seed=$RANDOM
 mlsearch_replicates=20
