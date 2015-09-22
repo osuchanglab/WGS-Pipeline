@@ -2,9 +2,9 @@
 set -e
 reference="reference"
 insertsize=400
-insertmin=$(($insertsize-100))
-insertmax=$(($insertsize+100))
-scriptdir="/pseudospace1/weisberga/Software/pileup_v0.6/ssaha_pileup"
+insertmin=0
+insertmax=1000
+scriptdir="/usr/local/bin/pileup_v0.6/ssaha_pileup"
 integerregex='^[0-9]+$'
 
 #Get user input for insert size and pileup script dir
@@ -29,17 +29,21 @@ command -v smalt >/dev/null 2>&1 || { echo >&2 "SMALT executable not found. Make
 for genome in `ls ./reads/*.fastq | sed 's/\.[12]\.fastq//' | sed 's/\.all\.fastq//' | sed 's/\.\/reads\///' | sort | uniq`; do
     echo "Analyzing genome $genome"
     
-    echo -n "Please enter the library insert size for $genome:"
-    read current_insertsize
-    if ! [[ $current_insertsize =~ $integerregex ]] ; then
-	echo "ERROR: Insert size must be a number. exiting." >&2; exit 1
-    fi
-    insertsize=$current_insertsize
-    insertmin=$(($insertsize - 100))
-    if [ $insertmin -lt 0 ]; then
-	    insertmin=0
-    fi
-    insertmax=$(($insertsize + 100))
+    echo -n "Please enter the library minimum insert size for $genome (0):"
+    read current_min_insertsize
+    if  [[ $current_min_insertsize =~ $integerregex ]] ; then
+    	insertmin=$current_min_insertsize
+	else
+		insertmin=0
+	fi
+
+    echo -n "Please enter the library maximum insert size for $genome (1000):"
+	read current_max_insertsize
+	if  [[ $current_max_insertsize =~ $integerregex ]] ; then
+		insertmax=$current_max_insertsize
+	else
+		insertmax=1000
+	fi
     
     echo "$genome: Mapping reads to reference genome using SMALT"
     if [ ! -e "$genome.cigar" ]; then
@@ -75,11 +79,6 @@ for genome in `ls ./reads/*.fastq | sed 's/\.[12]\.fastq//' | sed 's/\.all\.fast
 	if [ ! -s ./pileup/$genome.pileup ]; then
 	    echo "$genome: $scriptdir/ssaha_pileup/ssaha_pileup -solexa 1 -cons 1 ${genome}_cigar.dat ./index/reference.fna ${genome}_reads.fastq > ./pileup/$genome.pileup"
 	    $scriptdir/ssaha_pileup/ssaha_pileup -solexa 1 -cons 1 ${genome}_cigar.dat ./index/reference.fna ${genome}_reads.fastq > ./pileup/$genome.pileup
-	    #rm ${genome}_cigar_raw.dat
-	    #rm ${genome}_cigar_unclean.dat
-	    #rm ${genome}_cigar.dat
-	    #rm $genome.dat
-	    #rm ${genome}_reads.fastq
 	fi
     fi
 done
