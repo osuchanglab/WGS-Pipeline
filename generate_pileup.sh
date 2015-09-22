@@ -37,7 +37,16 @@ for genome in `ls ./reads/*.fastq | sed 's/\.[12]\.fastq//' | sed 's/\.all\.fast
 		insertmin=0
 	fi
 
-    echo -n "Please enter the library maximum insert size for $genome (1000):"
+
+    echo -n "Please enter the library insert size for $genome (500):"
+	read current_insertsize
+	if  [[ $current_insertsize =~ $integerregex ]] ; then
+		insertsize=$current_insertsize
+	else
+		insertsize=500
+	fi
+    
+	echo -n "Please enter the library maximum insert size for $genome (1000):"
 	read current_max_insertsize
 	if  [[ $current_max_insertsize =~ $integerregex ]] ; then
 		insertmax=$current_max_insertsize
