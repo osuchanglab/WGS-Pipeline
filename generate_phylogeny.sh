@@ -3,7 +3,7 @@ set -e
 #RAxML default settings, either change here or during runtime
 random_seed=$RANDOM
 mlsearch_replicates=20
-bootstrap_replicates=1000
+bootstrap_replicates="autoMRE"
 #bootstrap mode, either -b for regular bootstrap, -x for rapid bootstrap
 full_bootstrap="-b"
 rapid_bootstrap="-x"
@@ -12,9 +12,7 @@ snpmodel="ASC_GTRGAMMA --asc-corr=lewis"
 fullmodel="GTRGAMMA"
 model=$fullmodel
 raxmlexecutable="raxmlHPC"
-#example for pthreads compiled with AVX support
-#threads=1
-#raxmlexecutable="raxmlHPC-AVX-PTHREADS -T $threads"
+threads=1
 
 
 
@@ -24,6 +22,26 @@ raxmlexecutable="raxmlHPC"
 numregex='^[0-9]+$'
 
 #Get user input to change parameters
+echo "Do you want to use multiple cpu processors (threading)? (y/N):"
+read use_threads
+case $use_threads in
+    [yY][eE][sS]|[yY]) 
+		echo "Will use pthreads version of RAxML"
+		echo -n "Enter the number of cpu processors to use (1):"
+		read input_threads
+		if [ ! -z "$input_threads" ] && [[ $input_threads =~ $numregex ]]; then
+	   		threads=$input_threads
+		fi
+		echo -n "Enter the name of the RAxML pthreads executable (example:raxmlHPC-PTHREADS):"
+		read pthreads_raxml
+		echo "Using $pthreads_raxml with $threads threads"
+		raxmlexecutable="$pthreads_raxml -T $threads"
+		;;
+	*)
+		echo "Will use 1 cpu thread"
+		;;
+esac
+
 echo -n "Enter the number of tree searches to perform (default: $mlsearch_replicates): "
 read user_mlsearch_reps
 if [ ! -z "$user_mlsearch_reps" ] && [[ $user_mlsearch_reps =~ $numregex ]]; then
@@ -31,9 +49,9 @@ if [ ! -z "$user_mlsearch_reps" ] && [[ $user_mlsearch_reps =~ $numregex ]]; the
 fi
 echo "Will perform $mlsearch_replicates tree searches."
 
-echo -n "Enter the number of bootstrap replicates to perform (default: $bootstrap_replicates):"
+echo -n "Enter the number of bootstrap replicates to perform or a cutoff criterion (default: $bootstrap_replicates):"
 read user_bootstrap_reps
-if [ ! -z "$user_bootstrap_reps" ] && [[ $user_bootstrap_reps =~ $numregex ]]; then
+if [ ! -z "$user_bootstrap_reps" ] && ( [[ $user_bootstrap_reps =~ $numregex ]] || [[ $user_bootstrap_reps =~ (autoMRE|autoFC|autoMR|autoMRE_IGN) ]] ); then
     bootstrap_replicates=$user_bootstrap_reps
 fi
 echo "Will perform $bootstrap_replicates bootstrap replicates."
@@ -74,8 +92,8 @@ echo "$raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -N
 $raxmlexecutable -m $model -p $random_seed $bootstrap_mode $random_seed -N $bootstrap_replicates -s $input_alignment -n core_alignment_bootstrap.tre > raxml_bootstrap.out
 #Map bootstrap support values onto branches of the best ML search tree
 echo "Mapping bootstrap support values onto branches of the best ML search tree"
-echo "$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out"
-$raxmlexecutable -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out
+echo "raxmlHPC -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out"
+raxmlHPC -m $model -p $random_seed -f b -t RAxML_bestTree.core_alignment.tre -z RAxML_bootstrap.core_alignment_bootstrap.tre -n core_alignment_raxml.tre > raxml_bootstrap_mapping.out
 
 echo "Tree file written to ./core_alignment_raxml.tre"
 echo "Done."
