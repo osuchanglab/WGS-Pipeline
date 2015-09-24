@@ -156,6 +156,6 @@ echo "Performing non-parametric bootstrap replicate searches (output: raxml_boot
 ./scripts/emlsa-raxml.pl -bootstrap $bootstrap_replicates $raxmlscriptflags -boottype $bootstrap_mode > raxml_bootstrap.out
 echo "Mapping bootstrap values to the best ML search tree"
 ./scripts/emlsa-raxml.pl -final $raxmlscriptflags > raxml_final.out
-cp ./phylogeny/trees/RAxML_bipartitionsBranchLabels.phylogeny.final.nwk ./core_alignment_raxml.tre
+cp ./phylogeny/trees/RAxML_bipartitions.phylogeny.final.nwk ./core_alignment_raxml.tre
 echo "Tree file written to ./core_alignment_raxml.tre"
 echo "Done."
